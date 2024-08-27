@@ -22,4 +22,7 @@ fastapi
 uvicorn
 jinja2
 python-multipart
+miceforest
+kneed
+prettytable
 -e . 

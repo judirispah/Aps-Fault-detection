@@ -1,0 +1,11 @@
+model_selection:
+  module_0:
+    class: CatBoostClassifier
+    module: catboost
+    
+
+      
+  module_1:
+    class: XGBClassifier
+    module: xgboost
+   

@@ -1,5 +1,7 @@
 import sys
 from typing import Tuple
+from dataclasses import dataclass, asdict
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -11,7 +13,7 @@ from xgboost import XGBClassifier
 
 from sensor.Exception import apsException
 from sensor.logger import logging
-from sensor.utils.main_utils import load_numpy_array_data, read_yaml_file, load_object, save_object
+from sensor.utils.main_utils import load_numpy_array_data, read_yaml_file, load_object, save_object,write_yaml_file
 from sensor.entity.config_entity import ModelTrainerConfig
 from sensor.entity.artifact_entity import DataTransformationArtifact, ModelTrainerArtifact, ClassificationMetricArtifact
 from sensor.entity.estimator import apsModel
@@ -56,7 +58,7 @@ class ModelTrainer:
             precision = precision_score(y_test, y_pred)  
             recall = recall_score(y_test, y_pred)  
 
-            metric_artifact=ClassificationMetricArtifact(f1_score=f1,precision_score=precision,recall_score=recall) 
+            metric_artifact=ClassificationMetricArtifact(accuracy_score=accuracy,f1_score=f1,precision_score=precision,recall_score=recall) 
 
             return model,metric_artifact
         except Exception as e:
@@ -79,6 +81,8 @@ class ModelTrainer:
 
             best_model_detail,metric_artifact=self.get_model_object_report(train=train_arr,test=test_arr)
             preprocessing_obj = load_object(file_path=self.data_transformation_artifact.transformed_object_file_path)
+            write_yaml_file(Path(self.model_trainer_config.model_trainer_dir)/'metrics.yaml',asdict(metric_artifact))
+
 
 
 
@@ -88,11 +92,13 @@ class ModelTrainer:
             logging.info("Created aps model object with preprocessor and model")
             logging.info("Created best model file path.")
 
-            save_object(self.model_trainer_config.trained_model_file_path, aps_model)
+            save_object(self.model_trainer_config.trained_model_file_path, best_model_detail)
+            save_object("final_model/model.pkl",best_model_detail)
+            save_object("final_model/preprocessing.pkl",preprocessing_obj)
             model_trainer_artifact = ModelTrainerArtifact(
                 trained_model_file_path=self.model_trainer_config.trained_model_file_path,
-                metric_artifact=metric_artifact,
-            )
+                metric_artifact=Path(self.model_trainer_config.model_trainer_dir)/'metrics.yaml')
+            
             logging.info(f"Model trainer artifact: {model_trainer_artifact}")
             return model_trainer_artifact
         except Exception as e:

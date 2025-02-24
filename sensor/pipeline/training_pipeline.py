@@ -1,6 +1,7 @@
 import sys
 from sensor.Exception import apsException
 from sensor.logger import logging
+from sensor.Components.model_pusher import Model_Pusher
 
 from sensor.Components.data_ingestion import DataIngestion
 from sensor.Components.data_validation import DataValidation
@@ -86,7 +87,22 @@ class TrainPipeline:
             return model_trainer_artifact
 
         except Exception as e:
-            raise apsException(e, sys)       
+            raise apsException(e, sys) 
+
+
+    def start_model_pusher(self,model_trainer_artifact,data_ingestion_artifact,data_transformation_artifact):
+        """
+        This method of TrainPipeline class is responsible for starting model pusher component
+        """
+        logging.info("Entered the start_model_pusher method of TrainPipeline class") 
+        try:
+            pusher=Model_Pusher(model_trainer_artifact,data_ingestion_artifact,data_transformation_artifact)
+            pusher=pusher.initiate_model_pusher()
+            return pusher
+
+        except Exception as e:
+            raise apsException(e, sys) from e      
+                  
 
 
     def run_pipeline(self, ) -> None:
@@ -99,6 +115,8 @@ class TrainPipeline:
             data_transformation_artifact = self.start_data_transformation(
             data_ingestion_artifact=data_ingestion_artifact, data_validation_artifact=data_validation_artifact)
             model_trainer_artifact = self.start_model_trainer(data_transformation_artifact=data_transformation_artifact)
+            self.start_model_pusher(model_trainer_artifact,data_ingestion_artifact,data_transformation_artifact)
+
 
         except Exception as e:
             raise apsException(e, sys)       
